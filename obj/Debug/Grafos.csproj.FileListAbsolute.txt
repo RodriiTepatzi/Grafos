@@ -1,0 +1,15 @@
+C:\Users\sprno\source\repos\Grafos\bin\Debug\Grafos.exe.config
+C:\Users\sprno\source\repos\Grafos\bin\Debug\Grafos.exe
+C:\Users\sprno\source\repos\Grafos\bin\Debug\Grafos.pdb
+C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos.csprojAssemblyReference.cache
+C:\Users\sprno\source\repos\Grafos\obj\Debug\MainWindow.g.cs
+C:\Users\sprno\source\repos\Grafos\obj\Debug\App.g.cs
+C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos_MarkupCompile.cache
+C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos_MarkupCompile.lref
+C:\Users\sprno\source\repos\Grafos\obj\Debug\MainWindow.baml
+C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos.g.resources
+C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos.Properties.Resources.resources
+C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos.csproj.GenerateResource.cache
+C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos.csproj.CoreCompileInputs.cache
+C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos.exe
+C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos.pdb
