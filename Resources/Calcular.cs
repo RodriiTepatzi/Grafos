@@ -9,6 +9,8 @@ using System.Windows.Data;
 using System.Windows.Shapes;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using Grafos.Controllers;
+using Grafos.Models;
 
 namespace Grafos.Resources
 {
@@ -16,15 +18,10 @@ namespace Grafos.Resources
     {
 
         EncontrarElemento IHelper = new EncontrarElemento();
-        Nodo NodoHelper = new Nodo();
-        Aristas AristaHelper = new Aristas();
+        NodoController NodoHelper = new NodoController();
+        AristaController AristaHelper = new AristaController();
         int[,] matriz;
         int V = 0;
-
-        public Calcular()
-        {
-
-        }
 
         // ===VISTA DE LA TABLA===
 
@@ -44,44 +41,35 @@ namespace Grafos.Resources
         //  4   0   0   0   0
 
 
-        public int[,] CalcularMatriz(int[] nodos, string[] aristas, int[,] old)
+        public int[,] CalcularMatriz(List<Nodo> nodos, List<Arista> aristas)
         {
-            int TotalNodos = NodoHelper.TotalNodos(nodos);
-            int TotalAristas = AristaHelper.TotalAristas(aristas);
-            int id_1 = 0;
-            int id_2 = 0;
-            string nombre;
+            int TotalNodos = nodos.Count;
+            int TotalAristas = aristas.Count;
+            int idNodo1 = 0;
+            int idNodo2 = 0;
+
             matriz = new int[TotalNodos, TotalNodos];
 
-            for (int i = 0; i < TotalAristas; i++)
+            foreach (var arista in aristas)
             {
-                nombre = AristaHelper.ObtenerNombre(IHelper.FindChild<Line>(Application.Current.MainWindow, aristas[i]));
+                idNodo1 = arista.IdNodo1 - 1;
+                idNodo2 = arista.IdNodo2 - 1;
 
-                if (nombre.Length == 3)
+                if (arista.Peso == 0)
                 {
-                    
-                    id_1 = int.Parse(nombre[0].ToString()) - 1;
-                    id_2 = int.Parse(nombre[2].ToString()) - 1;
-                    if (old[id_1,id_2] != 0)
-                    {
-                        matriz[id_1, id_2] = old[id_1, id_2];
-                        matriz[id_2, id_1] = old[id_2, id_1];
-                    }
-                    else
-                    {
-                        matriz[id_1, id_2] = 1;
-                        matriz[id_2, id_1] = 1;
-                    }
-                    
+                    matriz[idNodo1, idNodo2] = 1;
+                    matriz[idNodo2, idNodo1] = 1;
                 }
-                else if (nombre.Length == 5)
+                else
                 {
-
+                    matriz[idNodo1, idNodo2] = arista.Peso;
+                    matriz[idNodo2, idNodo1] = arista.Peso;
                 }
             }
+
             LimpiarColumansLV();
             ElaborarColumnasLV(nodos);
-
+            RellenarCampos(matriz, nodos.Count);
             return matriz;
         }
 
@@ -90,7 +78,7 @@ namespace Grafos.Resources
             ListView lv = IHelper.FindChild<ListView>(Application.Current.MainWindow, "lv_matriz");
             lv.Items.Clear();
         }
-        private void ElaborarColumnasLV(int[] nodos)
+        private void ElaborarColumnasLV(List<Nodo> nodos)
         {
             var gridView = new GridView();
 
@@ -106,21 +94,21 @@ namespace Grafos.Resources
             });
 
 
-            for (int i = 1; i <= NodoHelper.TotalNodos(nodos); i++)
+            for (int i = 1; i <= nodos.Count; i++)
             {
 
                 gridView.Columns.Add(new GridViewColumn
                 {
                     Width = 80,
-                    Header = "nodo_" + nodos[i - 1],
+                    Header = "Nodo " + nodos[i - 1].Id,
                     DisplayMemberBinding = new Binding("[" + i.ToString() + "]")
                 });
             }
 
-            RellenarCampos(nodos, NodoHelper.TotalNodos(nodos));
+            
         }
 
-        private void RellenarCampos(int[] nodos, int size)
+        private void RellenarCampos(int[,] nodos, int size)
         {
 
             //ReemplazarNulls(size);
@@ -131,7 +119,7 @@ namespace Grafos.Resources
             for (int i = 0; i < size; i++)
             {
                 item = new List<string>();
-                item.Add("Nodo" + (i + 1).ToString());
+                item.Add("Nodo " + (i + 1).ToString());
 
                 for (int j = 0; j < size; j++)
                 {
@@ -173,10 +161,9 @@ namespace Grafos.Resources
             V = nodos_total;
             dijkstra(matriz, v_inicial);
 
-           
         }
 
-        public int[,] AgregarPesoMatriz (int[,] matriz, int nodo_1, int nodo_2, int peso, int[] nodos)
+        public int[,] AgregarPesoMatriz (int[,] matriz, int nodo_1, int nodo_2, int peso, List<Nodo> nodos)
         {
             nodo_1 = nodo_1 - 1;
             nodo_2 = nodo_2 - 1;
@@ -212,7 +199,10 @@ namespace Grafos.Resources
                           + "desde " + inicial +"\n";
 
             for (int i = 0; i < V; i++)
-                tb.Text += (i+1 + " \t\t " + dist[i] + "\n");
+            {
+                if (dist[i] != int.MaxValue) { tb.Text += (i + 1 + " \t\t " + dist[i] + "\n"); }
+                
+            }
         }
 
         private void dijkstra(int[,] grafo, int inicial)
@@ -263,4 +253,3 @@ namespace Grafos.Resources
         }
     }
 }
-

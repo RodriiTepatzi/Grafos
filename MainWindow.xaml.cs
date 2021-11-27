@@ -13,13 +13,13 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-using Nodo = Grafos.Resources.Nodo;
+
 using EncontrarElemento = Grafos.Resources.EncontrarElemento;
-using Arista = Grafos.Resources.Aristas;
 using Calcular = Grafos.Resources.Calcular;
-using Dijikstra = Grafos.Resources.Dijkstra;
-using _Dijkstra = Grafos.Resources._Dijkstra;
+using APrim = Grafos.Resources.Prim;
 using System.Text.RegularExpressions;
+using Grafos.Controllers;
+using Grafos.Models;
 
 namespace Grafos
 {
@@ -30,127 +30,166 @@ namespace Grafos
 
     public partial class MainWindow : Window
     {
-        private readonly IInputElement MovementCanvas;
-        private double max_x = 0, min_x = 10, max_y = 0, min_y = 70;
-
-        private int[] nodo_ids = new int[128];
-        private int[,] matriz;
-        private string[] aristas = new string[128];
-        private Boolean isConnecting = false;
-        private double x1, y1, x2, y2;
-        private string id_1, id_2;
-        private char tipo_1;
-        private char tipo_2;
-        private bool select_start_nodo = false;
-        private bool select_final_nodo = false;
-        
-        private int nodo_inicio = 1, nodo_final = 0;
-        private bool alreadyMod = false, stillSame = false;
-
-
-        private int peso_counter = 0;
-        private int max;
-
-        Calcular CalculoHelper = new Calcular();
-        Nodo nodo = new Nodo();
-        EncontrarElemento IHelper = new EncontrarElemento();
-        Arista Arista = new Arista();
-
+        // Declaración de validación regex.
         private static readonly Regex _regex = new Regex("[^0-9.-]+");
 
+        // Declaración del controlador de los nodos.
+        private readonly NodoController _nodoController = new NodoController();
+
+        // Declaración del controlador de las aristas.
+        private readonly AristaController _aristaController = new AristaController();
+
+        // Declaración de variables para obtener altura y ancho del canvas.
+        private readonly IInputElement MovementCanvas;
+
+        // Variables para guardar los limites de movimiento en el canvas.
+        // min_y debe tener el margen de arriba hacia el primer borde del canvas.
+        // min_x debe tener el margen de la izquierda hacia el primer borde del canvas.
+        private double max_x = 0, min_x = 10, max_y = 0, min_y = 70;
+
+        // Crear la lista de los objetos.
+        private List<Nodo> nodos = new List<Nodo>();
+        private List<Arista> aristas = new List<Arista>();
+
+        // Boolean para saber si un nodo esta siendo conectado con otro.
+        private Boolean conectandoArista = false;
+
+        // Variables para saber si se esta seleccionando el nodo Inicio y Final.
+        private Boolean selectInicio = false, selectFinal = false;
+
+
+        // Matriz para guardar la matriz de adyacencia.
+        private int[,] matriz;
+
+        // Variables para guardar temporalmente los id de nodos.
+        private int nodoId1 = 0, nodoId2 = 0;
+
+        // Variables para guardar los id del visor de pesos.
+        private int pNodoId1 = 0, pNodoId2 = 0;
+
+        
+
+        private int nodo_inicio = 1, nodo_final = 0;
+        private int[,] arbol;
+
+        private int peso_counter = 0;
+        private int max = 0;
+
+        Calcular CalculoHelper = new Calcular();
+        EncontrarElemento IHelper = new EncontrarElemento();
+        APrim Prim = new APrim();
+
+        // Constructor
         public MainWindow()
         {
             InitializeComponent();
 
+            // Obtener el valor máximo para mover los objetos por el canvas.
             max_x = canvas.Width;
             max_y = canvas.Height;
         }
 
-        private void nuevo_nodo_btn_Click(object sender, RoutedEventArgs e)
+        // Region Nodos
+
+        #region Nodos
+
+        private void btnNuevoNodo_Click(object sender, RoutedEventArgs e)
         {
-            int id = nodo.generarID(nodo_ids);
-            nodo_ids = nodo.FijarEnArreglo(nodo_ids, id);
+            // Obtenemos un nuevo Id para el nuevo nodo.
+            var id = _nodoController.GenerarId(nodos);
+
+            // Mostrar el total de los nodos.
             label_1.Content = id + " nodos.";
 
-            Ellipse dibujar_nodo = nodo.CrearNodo(id);
-            dibujar_nodo.MouseLeftButtonDown += Nodo_MouseLeftButtonDown;
-            dibujar_nodo.MouseLeftButtonUp += Nodo_MouseLeftButtonUp;
-            dibujar_nodo.MouseMove += Nodo_MouseMove;
-            dibujar_nodo.MouseRightButtonUp += Nodo_Eliminar;
-            dibujar_nodo.MouseEnter += Nodo_MouseEnter;
-            dibujar_nodo.MouseLeave += Nodo_MouseLeave;
-            dibujar_nodo.Visibility = Visibility.Visible;
+            // Creamos el nodo con el id generado.
+            var nodo = _nodoController.CrearNodo(id);
 
-            TextBox nodo_texto = nodo.GenerarTextoNodo(id);
-            nodo_texto.Visibility = Visibility.Visible;
-            nodo_texto.IsEnabled = false;
-            nodo_texto.Text = id + "";
+            // Asignamos todos los listeners necesarios.
+            nodo.CanvasObjeto.MouseLeftButtonDown += Nodo_MouseLeftButtonDown;
+            nodo.CanvasObjeto.MouseLeftButtonUp += Nodo_MouseLeftButtonUp;
+            nodo.CanvasObjeto.MouseMove += Nodo_MouseMove;
+            nodo.CanvasObjeto.MouseRightButtonUp += Nodo_Eliminar;
+            nodo.CanvasObjeto.MouseEnter += Nodo_MouseEnter;
+            nodo.CanvasObjeto.MouseLeave += Nodo_MouseLeave;
+            nodo.CanvasObjeto.Visibility = Visibility.Visible;
 
-            //#FF7DD5F5
+            // Asignamos un textbox que indicará el id del nodo.
+            var label = _nodoController.GenerarTextoNodo(id);
+            label.Visibility = Visibility.Visible;
+            label.IsEnabled = false;
+            label.Text = id + "";
+            nodo.CanvasLabel = label;
+            // Guardamos el nuevo nodo en la lista.
+            nodos.Add(nodo);
 
-            Rectangle[] cons = nodo.GenerarConexiones(id);
-            cons[0].MouseLeftButtonUp += CrearArista;
-            cons[1].MouseLeftButtonUp += CrearArista;
-            cons[2].MouseLeftButtonUp += CrearArista;
-            cons[3].MouseLeftButtonUp += CrearArista;
+            // Añadimos los elementos al canvas.
+            canvas.Children.Add(nodo.CanvasObjeto);
+            canvas.Children.Add(nodo.CanvasLabel);
 
-            canvas.Children.Add(cons[0]);
-            canvas.Children.Add(cons[1]);
-            canvas.Children.Add(cons[2]);
-            canvas.Children.Add(cons[3]);
-            canvas.Children.Add(dibujar_nodo);
-            canvas.Children.Add(nodo_texto);
+            // Seteamos el Z-Index para que haga overlap a las aristas y en su caso, el textbox al nodo.
+            TraerEnfrente(canvas, nodo.CanvasObjeto, 1);
+            TraerEnfrente(canvas, nodo.CanvasLabel, 2);
 
-            matriz = CalculoHelper.CalcularMatriz(nodo_ids, aristas, matriz);
-
+            // Calculamos la matriz.
+            matriz = CalculoHelper.CalcularMatriz(nodos, aristas);
         }
+
+        // Metodo para mostrar un mensaje de ayuda al pasar el mouse sobre el nodo.
         private void Nodo_MouseEnter(object sender, MouseEventArgs e)
         {
             Ellipse nodoo = sender as Ellipse;
-            nombre_nodo.Content = "Nodo " + nodo.ObtenerId(nodoo);
-            msg.Content = "Para eliminar el nodo " + nodo.ObtenerId(nodoo) + " presione clic derecho.";
+            nombre_nodo.Content = "Nodo " + _nodoController.ObtenerId(nodoo);
+            msg.Content = "Para eliminar el nodo " + _nodoController.ObtenerId(nodoo) + " presione clic derecho.";
         }
+
+        // Metodo para quitar el mensaje de ayuda al pasar el mouse sobre el nodo.
         private void Nodo_MouseLeave(object sender, MouseEventArgs e)
         {
             nombre_nodo.Content = "";
             msg.Content = "";
         }
-        private void Arista_MouseEnter(object sender, MouseEventArgs e)
-        {
-            Line ar = sender as Line;
-            nombre_arista.Content = "Arista: " + Arista.ObtenerNombre(ar);
-            msg.Content = "Para eliminar la arista " + Arista.ObtenerNombre(ar) + " presione clic derecho.";
-        }
-        private void Arista_MouseLeave(object sender, MouseEventArgs e)
-        {
-            nombre_arista.Content = "";
-            msg.Content = "";
-        }
+
+        // Metodo para capturar el focus en el nodo.
         private void Nodo_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             Ellipse ellipse = sender as Ellipse;
 
-            if (select_start_nodo)
-            {
 
-            }
-            else
+            if (!selectInicio)
             {
                 if (ellipse != null)
                 {
                     ellipse.CaptureMouse();
                 }
             }
-            
         }
 
+        // Metodo para cuando se suelte el boton izq. del mouse sobre el nodo.
         private void Nodo_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             Ellipse ellipse = sender as Ellipse;
 
-            if (select_start_nodo)
+            if (conectandoArista)
             {
-                nodo_inicio = int.Parse(nodo.ObtenerId(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, ellipse.Name)));
+                var id = int.Parse(_nodoController.ObtenerId(ellipse));
+
+                if (nodoId1 == 0)
+                {
+                    if (nodoId1 == id) MessageBox.Show("No puede asignar una arista al mismo nodo. \n Por favor seleccione otro.");
+                    else nodoId1 = id;
+                }
+                else if (nodoId2 == 0) nodoId2 = id;
+
+                if (nodoId1 != 0 && nodoId2 != 0)
+                {
+                    CrearArista(nodoId1, nodoId2);
+                    Cursor = Cursors.Arrow;
+                }
+            }
+
+            if (selectInicio)
+            {
+                nodo_inicio = int.Parse(_nodoController.ObtenerId(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, ellipse.Name)));
 
                 if (nodo_final == nodo_inicio)
                 {
@@ -160,11 +199,11 @@ namespace Grafos
                 else
                 {
                     nodo_inicial_lb.Content = "Nodo inicial: " + nodo_inicio;
-                    select_start_nodo = false;
+                    selectInicio = false;
                     Cursor = Cursors.Arrow;
                 }
 
-                
+
             }
             else
             {
@@ -175,12 +214,15 @@ namespace Grafos
             }
         }
 
+        // Metodo para arrastrar el nodo.
         private void Nodo_MouseMove(object sender, MouseEventArgs e)
         {
             Ellipse ellipse = sender as Ellipse;
-            string txt_id = nodo.ObtenerId(ellipse);
+            string txt_id = _nodoController.ObtenerId(ellipse);
+            var id = int.Parse(_nodoController.ObtenerId(ellipse));
+            var nodo = nodos.Find(n => n.Id == id);
 
-            if (ellipse != null && ellipse.IsMouseCaptured)
+            if (ellipse != null && ellipse.IsMouseCaptured && !conectandoArista)
             {
                 if (e.GetPosition(MovementCanvas).X < max_x && e.GetPosition(MovementCanvas).Y < max_y &&
                     e.GetPosition(MovementCanvas).X > min_x && e.GetPosition(MovementCanvas).Y > min_y)
@@ -188,49 +230,433 @@ namespace Grafos
                     Canvas.SetLeft(ellipse, e.GetPosition(MovementCanvas).X - 40);
                     Canvas.SetTop(ellipse, e.GetPosition(MovementCanvas).Y - 80);
                     MoverTexto(e.GetPosition(MovementCanvas).X - 40, e.GetPosition(MovementCanvas).Y - 80, txt_id);
-                    MoverConexiones(e.GetPosition(MovementCanvas).X - 40, e.GetPosition(MovementCanvas).Y - 80, txt_id);
-                    MoverAristas(txt_id);
+                    nodo.X = Canvas.GetLeft(ellipse) + 25;
+                    nodo.Y = Canvas.GetTop(ellipse) + 25;
+                    MoverAristas(id);
                 }
             }
         }
 
+        // Metodo para eliminar el nodo.
         private void Nodo_Eliminar(object sender, MouseButtonEventArgs e)
         {
             Ellipse ellipse = sender as Ellipse;
-            string id = nodo.ObtenerId(ellipse);
+            int id = int.Parse(_nodoController.ObtenerId(ellipse));
+            var nodo = nodos.Find(n => n.Id == id);
 
-            canvas.Children.Remove(IHelper.FindChild<TextBox>(Application.Current.MainWindow, "txt_" + id));
-            canvas.Children.Remove(IHelper.FindChild<Rectangle>(Application.Current.MainWindow, "cone_t_" + id));
-            canvas.Children.Remove(IHelper.FindChild<Rectangle>(Application.Current.MainWindow, "cone_r_" + id));
-            canvas.Children.Remove(IHelper.FindChild<Rectangle>(Application.Current.MainWindow, "cone_b_" + id));
-            canvas.Children.Remove(IHelper.FindChild<Rectangle>(Application.Current.MainWindow, "cone_l_" + id));
-            canvas.Children.Remove(ellipse);
+            canvas.Children.Remove(nodo.CanvasObjeto);
+            canvas.Children.Remove(nodo.CanvasLabel);
+            nodos.RemoveAll(n => n.Id == id);
 
-            if (int.Parse(id) == nodo_inicio)
+            if (id == nodo_inicio)
             {
                 nodo_inicio = 0;
                 nodo_inicial_lb.Content = "Nodo inicial: 0";
             }
-            
 
-            if (Arista.TotalAristas(aristas) == 0)
+            if (aristas.Count == 0)
             {
-                sig_peso.IsEnabled = false;
-                ant_peso.IsEnabled = false;
+                btnSiguientePeso.IsEnabled = false;
+                btnAnteriorPeso.IsEnabled = false;
             }
 
-            int id_r = int.Parse(id);
-            nodo_ids = nodo.EliminarEnArreglo(nodo_ids, id_r);
-            int total = nodo.TotalNodos(nodo_ids);
+            int counter = 1;
+
+            foreach (var nodoTemp in nodos)
+            {
+                if (nodoTemp.Id > id)
+                {
+                    nodoTemp.Id = counter;
+                    nodoTemp.CanvasObjeto.Name = "nodo_" + counter;
+                    nodoTemp.CanvasLabel.Name = "txt_" + counter;
+                    nodoTemp.CanvasLabel.Text = counter + "";
+                }
+                counter++;
+            }
+
+            int id_r = id;
+
             QuitarAristaCanvas(id);
-            RenombrarElementosNodos(nodo.getPosicion(), total);
-            max = Arista.TotalAristas(aristas);
 
-            label_1.Content = total + " nodos.";
+            max = aristas.Count;
+            label_1.Content = nodos.Count + " nodos.";
+            matriz = CalculoHelper.CalcularMatriz(nodos, aristas);
+            canvas.UpdateLayout();
+        }
 
-            matriz = CalculoHelper.CalcularMatriz(nodo_ids, aristas, matriz);
+        #endregion
+
+        // Region Aristas
+
+        #region Aristas
+
+        // Metodo para crear la arista
+        private void CrearArista(int IdNodo1, int IdNodo2)
+        {
+            if (conectandoArista && IdNodo1 != 0 && IdNodo2 != 0)
+            {
+                var nodo1 = nodos.Find(n => n.Id == IdNodo1);
+                var nodo2 = nodos.Find(n => n.Id == IdNodo2);
+                var arista = _aristaController.CrearAristas(nodo1.X, nodo1.Y, nodo2.X, nodo2.Y, IdNodo1, IdNodo2);
+                arista.CanvasObjeto.MouseRightButtonUp += EliminarArista;
+                arista.CanvasObjeto.MouseEnter += Arista_MouseEnter;
+                arista.CanvasObjeto.MouseLeave += Arista_MouseLeave;
+
+                canvas.Children.Add(arista.CanvasObjeto);
+                aristas.Add(arista);
+
+                nodoId1 = 0;
+                nodoId2 = 0;
+                conectandoArista = false;
+                Cursor = Cursors.Arrow;
+                btnGuardarPeso.IsEnabled = true;
+                btnArbol.IsEnabled = true;
+                btnNuevoNodo.IsEnabled = true;
+                btnPuntoPartida.IsEnabled = true;
+                btnCrearArista.IsEnabled = true;
+
+                matriz = CalculoHelper.CalcularMatriz(nodos, aristas);
+
+                if (aristas.Count == 1)
+                {
+                    int id1 = aristas[peso_counter].IdNodo1;
+                    int id2 = aristas[peso_counter].IdNodo2;
+
+                    pNodoId1 = id1;
+                    pNodoId2 = id2;
+
+                    var arista1 = aristas.Find(n => n.IdNodo1 == pNodoId1 && n.IdNodo2 == pNodoId2);
+                    arista.CanvasObjeto.Stroke = Brushes.Green;
+
+                    tbPeso.Text = arista.Peso.ToString();
+                    ar_label.Content = id1 + "-" + id2;
+                    canvas.UpdateLayout();
+                }
+                else if (aristas.Count > 1)
+                {
+                    btnSiguientePeso.IsEnabled = true;
+                }
+            }
+        }
+
+        // Metodo para eliminar 1 arista especifica
+        private void EliminarArista(object sender, MouseEventArgs e)
+        {
+            Line ar = sender as Line;
+            var arista = aristas.Find(n => n.CanvasObjeto == ar);
+            aristas.RemoveAll(n => n.CanvasObjeto == ar);
+            canvas.Children.Remove(arista.CanvasObjeto);
+            max = aristas.Count();
+
+            if (aristas.Count == 0)
+            {
+                btnSiguientePeso.IsEnabled = false;
+                btnAnteriorPeso.IsEnabled = false;
+            }
+
+            RenombrarAristas(arista.IdNodo1);
+
+            matriz = CalculoHelper.CalcularMatriz(nodos, aristas);
+        }
+
+        // Metodo para mostrar un mensaje de ayuda al pasar el mouse sobre la arista.
+        private void Arista_MouseEnter(object sender, MouseEventArgs e)
+        {
+            Line ar = sender as Line;
+            nombre_arista.Content = "Arista: " + _aristaController.ObtenerNombre(ar);
+            msg.Content = "Para eliminar la arista " + _aristaController.ObtenerNombre(ar) + " presione clic derecho.";
+        }
+
+        // Metodo para quitar el mensaje de ayuda al pasar el mouse sobre la arista.
+        private void Arista_MouseLeave(object sender, MouseEventArgs e)
+        {
+            nombre_arista.Content = "";
+            msg.Content = "";
+        }
+
+        // Metodo para mover las aristas
+        private void MoverAristas(int id)
+        {
+            var nodo = nodos.Find(n => n.Id == id);
+            foreach (var arista in aristas)
+            {
+                if (arista.IdNodo1 == id)
+                {
+                    arista.CanvasObjeto.X1 = nodo.X;
+                    arista.CanvasObjeto.Y1 = nodo.Y;
+                }
+                else if (arista.IdNodo2 == id)
+                {
+                    arista.CanvasObjeto.X2 = nodo.X;
+                    arista.CanvasObjeto.Y2 = nodo.Y;
+                }
+            }
+            canvas.UpdateLayout();
+        }
+
+        // Metodo para quitar todas las aristas al borrar un nodo
+        private void QuitarAristaCanvas(int id)
+        {
+            var aristasQuitar = aristas.FindAll(n => n.IdNodo1 == id || n.IdNodo2 == id);
+            foreach (var arista in aristasQuitar)
+            {
+                canvas.Children.Remove(arista.CanvasObjeto);
+            }
+
+            aristas.RemoveAll(n => n.IdNodo1 == id || n.IdNodo2 == id);
+
+            RenombrarAristas(id);
+            max = aristas.Count;
+            matriz = CalculoHelper.CalcularMatriz(nodos, aristas);
+        }
+
+        // Metodo para renombrar las aristas (desopues de borrar un nodo)
+        private void RenombrarAristas(int id)
+        {
+            int idd = id + 1;
+            int total_aristas = aristas.Count;
+            int total_nodos = nodos.Count;
+
+            Console.WriteLine(idd);
+
+
+            for (int i = idd; i <= total_nodos + 1; i++)
+            {
+                for (int j = 0; j < total_aristas; j++)
+                {
+
+                    Console.WriteLine(aristas[j]);
+                    if (aristas.ElementAt(j).IdNodo1 == id)
+                    {
+                        Line ar = aristas.ElementAt(j).CanvasObjeto;
+                        string nuevo = _aristaController.RenombrarID(ar, i - 1);
+                        aristas[j].CanvasObjeto.Name = nuevo;
+                        aristas[j].NombreArista = nuevo;
+                        Console.WriteLine(id + " " + nuevo);
+                    }
+                    else if (aristas.ElementAt(j).IdNodo2 == id)
+                    {
+
+                    }
+                }
+            }
+            canvas.UpdateLayout();
+        }
+
+        #endregion
+
+        // Metodo para agregar un nuevo nodo
+
+        #region Botones
+
+        private void btnPuntoPartida_Click(object sender, RoutedEventArgs e)
+        {
+            if (selectFinal)
+            {
+                MessageBox.Show("Por favor, seleccione el nodo final e intetelo de nuevo.");
+            }
+            else
+            {
+                Cursor = Cursors.Pen;
+                selectInicio = true;
+            }
 
         }
+
+        private void btnPuntoFinal_Click(object sender, RoutedEventArgs e)
+        {
+            if (selectInicio)
+            {
+                MessageBox.Show("Por favor, seleccione el nodo inicial e intetelo de nuevo.");
+            }
+            else
+            {
+                Cursor = Cursors.Pen;
+                selectFinal = true;
+            }
+        }
+
+        private void btnSiguientePeso_Loaded(object sender, RoutedEventArgs e)
+        {
+            max = aristas.Count;
+            if (max == peso_counter)
+            {
+                btnSiguientePeso.IsEnabled = false;
+            }
+        }
+
+        private void btnGuardarPeso_Click(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(tbPeso.Text.ToString())) 
+            {
+                var arista = aristas.Find(n => n.IdNodo1 == pNodoId1 && n.IdNodo2 == pNodoId2);
+                arista.Peso = int.Parse(tbPeso.Text.ToString());
+                matriz = CalculoHelper.CalcularMatriz(nodos, aristas);
+            }
+        }
+
+        private void btnAnteriorPeso_Click(object sender, RoutedEventArgs e)
+        {
+            var aristaAnterior = aristas.Find(n => n.IdNodo1 == pNodoId1 && n.IdNodo2 == pNodoId2);
+            aristaAnterior.CanvasObjeto.Stroke = Brushes.Black;
+
+            if (peso_counter > 0)
+            {
+
+                peso_counter--;
+
+                int id1 = aristas[peso_counter].IdNodo1;
+                int id2 = aristas[peso_counter].IdNodo2;
+
+                pNodoId1 = id1;
+                pNodoId2 = id2;
+
+                var arista = aristas.Find(n => n.IdNodo1 == pNodoId1 && n.IdNodo2 == pNodoId2);
+                arista.CanvasObjeto.Stroke = Brushes.Green;
+
+                tbPeso.Text = arista.Peso.ToString();
+                ar_label.Content = id1 + "-" + id2;
+                canvas.UpdateLayout();
+            }
+
+            if (peso_counter == 0)
+            {
+                btnSiguientePeso.IsEnabled = true;
+                btnAnteriorPeso.IsEnabled = false;
+            }
+            else if (max == peso_counter)
+            {
+                btnSiguientePeso.IsEnabled = true;
+            }
+        }
+
+        private void btnSiguientePeso_Click(object sender, RoutedEventArgs e)
+        {
+            var aristaAnterior = aristas.Find(n => n.IdNodo1 == pNodoId1 && n.IdNodo2 == pNodoId2);
+            aristaAnterior.CanvasObjeto.Stroke = Brushes.Black;
+
+            max = aristas.Count;
+            peso_counter++;
+
+            if (peso_counter > 0)
+            {
+                btnAnteriorPeso.IsEnabled = true;
+            }
+
+            if (max-1 == peso_counter)
+            {
+                btnSiguientePeso.IsEnabled = false;
+            }
+
+            if (max > 0)
+            {
+                if (peso_counter < max)
+                {
+                    int id1 = aristas[peso_counter].IdNodo1;
+                    int id2 = aristas[peso_counter].IdNodo2;
+
+                    pNodoId1 = id1;
+                    pNodoId2 = id2;
+
+                    var arista = aristas.Find(n => n.IdNodo1 == pNodoId1 && n.IdNodo2 == pNodoId2);
+                    arista.CanvasObjeto.Stroke = Brushes.Green;
+
+                    tbPeso.Text = arista.Peso.ToString();
+                    ar_label.Content = id1 + "-" + id2;
+
+                    canvas.UpdateLayout();
+                }
+                else
+                {
+                    btnSiguientePeso.IsEnabled = false;
+                }
+            }
+
+        }
+
+        private void btnExpandir_Click(object sender, RoutedEventArgs e)
+        {
+            ExpandirMatrizWindow expandirMatriz = new ExpandirMatrizWindow(matriz, nodos);
+            expandirMatriz.ShowDialog();
+        }
+
+        private void Window_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                nodoId1 = 0;
+                nodoId2 = 0;
+                conectandoArista = false;
+                Cursor = Cursors.Arrow;
+                btnGuardarPeso.IsEnabled = true;
+                btnArbol.IsEnabled = true;
+                btnNuevoNodo.IsEnabled = true;
+                btnPuntoPartida.IsEnabled = true;
+                btnCrearArista.IsEnabled = true;
+            }
+        }
+
+        private void btnInicio_Click(object sender, RoutedEventArgs e)
+        {
+            if (nodos.Count == 0 || aristas.Count == 0)
+            {
+                MessageBox.Show("No hay nodos u aristas existentes.");
+            }
+            else
+            {
+                matriz = CalculoHelper.CalcularMatriz(nodos,aristas);
+                CalculoHelper.ResolverGrafo(matriz, nodo_inicio, nodos.Count);
+                List<string> ListaNodos = new List<string>();
+
+                for (int i = 0; i < nodos.Count; i++)
+                {
+                    ListaNodos.Add(nodos[i].Id.ToString());
+                }
+
+                arbol = Prim.InitAlgPrim(matriz, ListaNodos, nodo_inicio);
+                //ImprimirArbol(arbol);
+                btnArbol.IsEnabled = true;
+            }   
+        }
+
+        private void btnArbol_Click(object sender, RoutedEventArgs e)
+        {
+            /*MatrizArbol ArbolGenerador = new MatrizArbol(arbol, nodos);
+            ArbolGenerador.ShowDialog();*/
+
+        }
+
+        private void btnCrearArista_Click(object sender, RoutedEventArgs e)
+        {
+            conectandoArista = true;
+            Cursor = Cursors.Pen;
+            btnGuardarPeso.IsEnabled = false;
+            btnArbol.IsEnabled = false;
+            btnAnteriorPeso.IsEnabled = false;
+            btnSiguientePeso.IsEnabled = false;
+            btnNuevoNodo.IsEnabled = false;
+            btnPuntoPartida.IsEnabled = false;
+            btnCrearArista.IsEnabled = false;
+        }
+
+        #endregion
+
+
+        #region Listener
+
+        private void Window_MouseMove(object sender, MouseEventArgs e)
+        {
+            coordenadas.Content = "x: " + e.GetPosition(MovementCanvas).X + " y: " + e.GetPosition(MovementCanvas).Y;
+        }
+
+        private void tbPeso_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            e.Handled = Regex.IsMatch(e.Text, "[^0-9]+");
+        }
+
+        #endregion
+
 
         private void MoverTexto(double x, double y, string id)
         {
@@ -240,476 +666,34 @@ namespace Grafos
             Canvas.SetTop(tb, y + 17);
         }
 
-        private void MoverConexiones(double x, double y, string id)
+        static public void TraerEnfrente(Canvas pParent, object pToMove, int max)
         {
-            Rectangle rect_t = IHelper.FindChild<Rectangle>(Application.Current.MainWindow, "cone_t_" + id);
-            Rectangle rect_b = IHelper.FindChild<Rectangle>(Application.Current.MainWindow, "cone_b_" + id);
-            Rectangle rect_r = IHelper.FindChild<Rectangle>(Application.Current.MainWindow, "cone_r_" + id);
-            Rectangle rect_l = IHelper.FindChild<Rectangle>(Application.Current.MainWindow, "cone_l_" + id);
-
-            Canvas.SetLeft(rect_t, x + 20);
-            Canvas.SetTop(rect_t, y - 5);
-
-            Canvas.SetLeft(rect_r, x + 45);
-            Canvas.SetTop(rect_r, y + 20);
-
-            Canvas.SetLeft(rect_b, x + 20);
-            Canvas.SetTop(rect_b, y + 45);
-
-            Canvas.SetLeft(rect_l, x - 5);
-            Canvas.SetTop(rect_l, y + 20);
-
-        }
-        private void RenombrarElementosNodos(int id, int total)
-        {
-            for (int i = id + 1; i <= total; i++)
+            try
             {
-                Ellipse Nodo = IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + (i + 1));
-                Nodo.Name = "nodo_" + i;
-                TextBox tb = IHelper.FindChild<TextBox>(Application.Current.MainWindow, "txt_" + (i + 1));
-                tb.Name = "txt_" + i;
-                Rectangle rect_t = IHelper.FindChild<Rectangle>(Application.Current.MainWindow, "cone_t_" + (i + 1));
-                rect_t.Name = "cone_t_" + i;
-                Rectangle rect_r = IHelper.FindChild<Rectangle>(Application.Current.MainWindow, "cone_r_" + (i + 1));
-                rect_r.Name = "cone_r_" + i;
-                Rectangle rect_b = IHelper.FindChild<Rectangle>(Application.Current.MainWindow, "cone_b_" + (i + 1));
-                rect_b.Name = "cone_b_" + i;
-                Rectangle rect_l = IHelper.FindChild<Rectangle>(Application.Current.MainWindow, "cone_l_" + (i + 1));
-                rect_l.Name = "cone_l_" + i;
-            }
-        }
-
-        private void Window_MouseMove(object sender, MouseEventArgs e)
-        {
-            coordenadas.Content = "x: " + e.GetPosition(MovementCanvas).X + " y: " + e.GetPosition(MovementCanvas).Y;
-        }
-
-        private void CrearArista(object sender, MouseButtonEventArgs e)
-        {
-            Rectangle conector = sender as Rectangle;
-            Line ar;
-
-            if (isConnecting)
-            {
-                
-                id_2 = nodo.getConID(conector.Name);
-                if (id_1 == id_2)
+                int currentIndex = Canvas.GetZIndex((UIElement)pToMove);
+                int zIndex = 0;
+                int maxZ = max;
+                UserControl child;
+                for (int i = 0; i < pParent.Children.Count; i++)
                 {
-                    MessageBox.Show("No es posible realizar esta acción.");
-                }
-                else
-                {
-                    x2 = double.Parse(conector.GetValue(Canvas.LeftProperty).ToString());
-                    y2 = double.Parse(conector.GetValue(Canvas.TopProperty).ToString());
-                    tipo_2 = nodo.ObtenerTipoConector(conector.Name);
-                    ar = Arista.CrearAristas(x1 + 5, y1 + 5, x2 + 5, y2 + 5, id_1, id_2, tipo_1, tipo_2);
-                    ar.MouseRightButtonUp += Eliminar1Arista;
-                    ar.MouseEnter += Arista_MouseEnter;
-                    ar.MouseLeave += Arista_MouseLeave;
-                    int pos_ar = Arista.TotalAristas(aristas);
-                    aristas[pos_ar] = ar.Name;
-                    canvas.Children.Add(ar);
-
-                    isConnecting = false;
-                    Cursor = Cursors.Arrow;
-                    matriz = CalculoHelper.CalcularMatriz(nodo_ids, aristas, matriz);
-                    max = Arista.TotalAristas(aristas);
-                    sig_peso.IsEnabled = true;
-                }
-
-                
-            }
-            else
-            {
-                isConnecting = true;
-                Cursor = Cursors.Pen;
-                id_1 = nodo.getConID(conector.Name);
-                x1 = double.Parse(conector.GetValue(Canvas.LeftProperty).ToString());
-                y1 = double.Parse(conector.GetValue(Canvas.TopProperty).ToString());
-                tipo_1 = nodo.ObtenerTipoConector(conector.Name);
-            }
-        }
-
-        private void Eliminar1Arista(object sender, MouseEventArgs e)
-        {
-            Line ar = sender as Line;
-            string[] ar_name = { ar.Name };
-            for (int i = 0; i < aristas.Length; i++)
-            {
-                if (aristas[i] == ar_name[0])
-                {
-                    aristas = Arista.EliminarRegistro(aristas, ar_name);
-                    canvas.Children.Remove(IHelper.FindChild<Line>(Application.Current.MainWindow, ar_name[0]));
-                    max = Arista.TotalAristas(aristas);
-                }
-            }
-
-            if (Arista.TotalAristas(aristas) == 0)
-            {
-                sig_peso.IsEnabled = false;
-                ant_peso.IsEnabled = false;
-            }
-        }
-
-        private void nodo_partida_btn_Click(object sender, RoutedEventArgs e)
-        {
-            if (select_final_nodo)
-            {
-                MessageBox.Show("Por favor, seleccione el nodo final e intetelo de nuevo.");
-            }
-            else
-            {
-                Cursor = Cursors.Pen;
-                select_start_nodo = true;
-            }
-            
-        }
-
-        private void peso_box_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            var textBox = sender as TextBox;
-            e.Handled = Regex.IsMatch(e.Text, "[^0-9]+");
-        }
-
-        private void peso_box_TextChanged(object sender, TextChangedEventArgs e)
-        {
-
-            
-        }
-
-        private void nodo_final_btn_Click(object sender, RoutedEventArgs e)
-        {
-            if (select_start_nodo)
-            {
-                MessageBox.Show("Por favor, seleccione el nodo inicial e intetelo de nuevo.");
-            }
-            else
-            {
-                Cursor = Cursors.Pen;
-                select_final_nodo = true;
-            }
-        }
-
-        private void peso_box_KeyDown(object sender, KeyEventArgs e)
-        {
-
-        }
-
-        private void sig_peso_Loaded(object sender, RoutedEventArgs e)
-        {
-            max = Arista.TotalAristas(aristas);
-            if (max == peso_counter)
-            {
-                sig_peso.IsEnabled = false;
-            }
-        }
-
-        private void Button_Click_1(object sender, RoutedEventArgs e)
-        {
-            string nombre = ar_label.Content.ToString();
-            int id_n_1 = 0;
-            int id_n_2 = 0;
-            if (nombre.Length == 5)
-            {
-                id_n_1 = int.Parse(nombre[0].ToString());
-                id_n_2 = int.Parse(nombre[4].ToString());
-            }
-
-            if (!string.IsNullOrEmpty(peso_box.Text))
-            {
-                if (int.Parse(peso_box.Text.ToString()) == 0)
-                {
-                    MessageBox.Show("No es posible guardar este peso.");
-                }
-                else
-                {
-                    if (id_n_1 != 0 && id_n_2 != 0)
+                    if (pParent.Children[i] is UserControl &&
+                        pParent.Children[i] != pToMove)
                     {
-                        matriz = CalculoHelper.AgregarPesoMatriz(matriz, id_n_1, id_n_2, int.Parse(peso_box.Text.ToString()), nodo_ids);
-                        matriz = CalculoHelper.AgregarPesoMatriz(matriz, id_n_2, id_n_1, int.Parse(peso_box.Text.ToString()), nodo_ids);
-                    }
-                }
-            }
-        }
-
-        private void ant_peso_Click(object sender, RoutedEventArgs e)
-        {
-            if (peso_counter > 0)
-            {
-                
-                peso_counter--;
-                if (aristas[peso_counter].Length == 5)
-                {
-                    Console.WriteLine(peso_counter);
-                    string nombre = aristas[peso_counter];
-                    string nombre_ids = nombre[1].ToString() + " - " + nombre[4].ToString();
-                    ar_label.Content = nombre_ids;
-                    alreadyMod = false;
-                }
-            }
-
-            if (peso_counter == 0)
-            {
-                ant_peso.IsEnabled = false;
-                sig_peso.IsEnabled = true;
-            }
-            else if(max == peso_counter)
-            {
-                sig_peso.IsEnabled = true;
-            }
-        }
-
-        private void sig_peso_Click(object sender, RoutedEventArgs e)
-        {
-            max = Arista.TotalAristas(aristas);
-            if (peso_counter > 0)
-            {
-                ant_peso.IsEnabled = true;
-            }
-            if (max == peso_counter)
-            {
-                sig_peso.IsEnabled = false;
-            }
-            else
-            {
-
-                
-
-                if (max > 0)
-                {
-                    if (peso_counter < max)
-                    {
-
-                        if (aristas[peso_counter].Length == 5)
+                        child = pParent.Children[i] as UserControl;
+                        zIndex = Canvas.GetZIndex(child);
+                        maxZ = Math.Max(maxZ, zIndex);
+                        if (zIndex > currentIndex)
                         {
-                            string nombre = aristas[peso_counter];
-                            string nombre_ids = nombre[1].ToString() + " - " + nombre[4].ToString();
-                            int id_n1 = int.Parse(nombre[1].ToString());
-                            int id_n2 = int.Parse(nombre[4].ToString());
-
-                            peso_box.Text = matriz[(id_n1 - 1), (id_n2 - 1)].ToString();
-                            ar_label.Content = nombre_ids;
-                            alreadyMod = false;
-                            peso_counter++;
-                        }
-
-                    }
-                }
-            }
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            mostrarAristas();
-        }
-
-        private void MoverAristas(string id)
-        {
-
-            string[] idss = Arista.AristasAMover(aristas, id);
-            char tipo;
-
-            if (idss.Length != 0)
-            {
-                for (int i = 0; i < idss.Length; i++)
-                {
-                    string nombre_ar = idss[i];
-
-                    if (id.Length == 1)
-                    {
-                        char[] temp = id.ToCharArray();
-
-                        if (nombre_ar.IndexOf(temp[0]) == 1)
-                        {
-                            if (nombre_ar.ElementAt(0) == 't')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString()) + 25;
-                                arista.Y1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString());
-                            }
-                            else if (nombre_ar.ElementAt(0) == 'r')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString()) + 50;
-                                arista.Y1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString()) + 25;
-                            }
-                            else if (nombre_ar.ElementAt(0) == 'b')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString()) + 25;
-                                arista.Y1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString()) + 50;
-                            }
-                            else if (nombre_ar.ElementAt(0) == 'l')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString());
-                                arista.Y1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString()) + 25;
-                            }
-
-                        }
-                        else if (nombre_ar.IndexOf(temp[0]) == 4)
-                        {
-                            if (nombre_ar.ElementAt(3) == 't')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString()) + 25;
-                                arista.Y2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString());
-                            }
-                            else if (nombre_ar.ElementAt(3) == 'r')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString()) + 50;
-                                arista.Y2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString()) + 25;
-                            }
-                            else if (nombre_ar.ElementAt(3) == 'b')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString()) + 25;
-                                arista.Y2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString()) + 50;
-                            }
-                            else if (nombre_ar.ElementAt(3) == 'l')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString());
-                                arista.Y2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString()) + 25;
-                            }
-                        }
-                    }
-                    else if (id.Length == 2)
-                    {
-                        char[] temp = id.ToCharArray();
-
-                        if (nombre_ar.IndexOf(temp[0]) == 1 && nombre_ar.IndexOf(temp[0]) == 2)
-                        {
-                            if (nombre_ar.ElementAt(0) == 't')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString()) + 25;
-                                arista.Y1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString());
-                            }
-                            else if (nombre_ar.ElementAt(0) == 'r')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString()) + 50;
-                                arista.Y1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString()) + 25;
-                            }
-                            else if (nombre_ar.ElementAt(0) == 'b')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString()) + 25;
-                                arista.Y1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString()) + 50;
-                            }
-                            else if (nombre_ar.ElementAt(0) == 'l')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString());
-                                arista.Y1 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString()) + 25;
-                            }
-                        }
-                        else if ((nombre_ar.LastIndexOf(temp[0]) == 5 && nombre_ar.LastIndexOf(temp[1]) == 6) || (nombre_ar.LastIndexOf(temp[0]) == 4 && nombre_ar.LastIndexOf(temp[1]) == 5))
-                        {
-                            if (nombre_ar.ElementAt(4) == 't')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString()) + 25;
-                                arista.Y2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString());
-                            }
-                            else if (nombre_ar.ElementAt(4) == 'r')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString()) + 50;
-                                arista.Y2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString()) + 25;
-                            }
-                            else if (nombre_ar.ElementAt(4) == 'b')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString()) + 25;
-                                arista.Y2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString()) + 50;
-                            }
-                            else if (nombre_ar.ElementAt(4) == 'l')
-                            {
-                                Line arista = IHelper.FindChild<Line>(Application.Current.MainWindow, idss[i]);
-                                arista.X2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.LeftProperty).ToString());
-                                arista.Y2 = double.Parse(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, "nodo_" + id).GetValue(Canvas.TopProperty).ToString()) + 25;
-                            }
+                            Canvas.SetZIndex(child, zIndex - 1);
                         }
                     }
                 }
+                Canvas.SetZIndex((UIElement)pToMove, maxZ);
             }
-        }
-
-        private void QuitarAristaCanvas(string id)
-        {
-            string[] a_eliminar = Arista.AristasAEliminar(aristas, id);
-
-            for (int i = 0; i < a_eliminar.Length; i++)
+            catch (Exception ex)
             {
-                canvas.Children.Remove(IHelper.FindChild<Line>(Application.Current.MainWindow, a_eliminar[i]));
+                MessageBox.Show(ex.Message);
             }
-
-            aristas = Arista.EliminarRegistro(aristas, a_eliminar);
-            RenombrarAristas(id);
-            matriz = CalculoHelper.CalcularMatriz(nodo_ids, aristas, matriz);
-            max = Arista.TotalAristas(aristas);
-        }
-
-        private void RenombrarAristas(string id)
-        {
-            int idd = int.Parse(id) + 1;
-            int total_aristas = Arista.TotalAristas(aristas);
-            int total_nodos = nodo.TotalNodos(nodo_ids);
-
-            Console.WriteLine(idd);
-
-            for (int i = idd; i <= total_nodos + 1; i++)
-            {
-                for (int j = 0; j < total_aristas; j++)
-                {
-
-                    Console.WriteLine(aristas[j]);
-                    if (aristas[j].Contains(i.ToString()))
-                    {
-                        Line ar = IHelper.FindChild<Line>(Application.Current.MainWindow, aristas[j]);
-                        string nuevo = Arista.RenombrarID(ar, i - 1);
-                        aristas[j] = nuevo;
-                        ar.Name = nuevo;
-                        Console.WriteLine(id + " " + nuevo);
-                    }
-                }
-            }
-        }
-
-        private void mostrarAristas()
-        {
-            label_2.Content = "";
-            for (int i = 0; i < aristas.Length; i++)
-            {
-                if (aristas[i] == null)
-                {
-
-                }
-                else
-                {
-                    label_2.Content += i + ": " + aristas[i] + " ";
-                }
-            }
-        }
-
-        private void set_inicio_Click(object sender, RoutedEventArgs e)
-        {
-            if (nodo.TotalNodos(nodo_ids) == 0 || Arista.TotalAristas(aristas) == 0)
-            {
-                MessageBox.Show("No hay nodos u aristas existentes.");
-            }
-            else
-            {
-                CalculoHelper.ResolverGrafo(matriz, nodo_inicio, nodo.TotalNodos(nodo_ids));
-            }   
-        }
-        
-        private static bool IsTextAllowed(string text)
-        {
-            return !_regex.IsMatch(text);
         }
     }
 }

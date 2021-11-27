@@ -1,7 +1,6 @@
 C:\Users\sprno\source\repos\Grafos\bin\Debug\Grafos.exe.config
 C:\Users\sprno\source\repos\Grafos\bin\Debug\Grafos.exe
 C:\Users\sprno\source\repos\Grafos\bin\Debug\Grafos.pdb
-C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos.csprojAssemblyReference.cache
 C:\Users\sprno\source\repos\Grafos\obj\Debug\MainWindow.g.cs
 C:\Users\sprno\source\repos\Grafos\obj\Debug\App.g.cs
 C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos_MarkupCompile.cache
@@ -13,3 +12,11 @@ C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos.csproj.GenerateResource.cach
 C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos.csproj.CoreCompileInputs.cache
 C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos.exe
 C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos.pdb
+C:\Users\sprno\source\repos\Grafos\obj\Debug\ArbolGenerador.g.cs
+C:\Users\sprno\source\repos\Grafos\obj\Debug\ArbolGenerador.baml
+C:\Users\sprno\source\repos\Grafos\obj\Debug\MatrizArbol.g.cs
+C:\Users\sprno\source\repos\Grafos\obj\Debug\MatrizArbol.baml
+C:\Users\sprno\source\repos\Grafos\obj\Debug\Grafos.csproj.AssemblyReference.cache
+C:\Users\sprno\source\repos\Grafos\obj\Debug\App.baml
+C:\Users\sprno\source\repos\Grafos\obj\Debug\ExpandirMatrizWindow.g.cs
+C:\Users\sprno\source\repos\Grafos\obj\Debug\ExpandirMatrizWindow.baml

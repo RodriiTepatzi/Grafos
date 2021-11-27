@@ -1,7 +1,6 @@
 C:\Users\sprno\source\repos\Grafos\bin\Release\Grafos.exe.config
 C:\Users\sprno\source\repos\Grafos\bin\Release\Grafos.exe
 C:\Users\sprno\source\repos\Grafos\bin\Release\Grafos.pdb
-C:\Users\sprno\source\repos\Grafos\obj\Release\Grafos.csprojAssemblyReference.cache
 C:\Users\sprno\source\repos\Grafos\obj\Release\MainWindow.g.cs
 C:\Users\sprno\source\repos\Grafos\obj\Release\App.g.cs
 C:\Users\sprno\source\repos\Grafos\obj\Release\Grafos_MarkupCompile.cache
@@ -13,3 +12,9 @@ C:\Users\sprno\source\repos\Grafos\obj\Release\Grafos.csproj.GenerateResource.ca
 C:\Users\sprno\source\repos\Grafos\obj\Release\Grafos.csproj.CoreCompileInputs.cache
 C:\Users\sprno\source\repos\Grafos\obj\Release\Grafos.exe
 C:\Users\sprno\source\repos\Grafos\obj\Release\Grafos.pdb
+C:\Users\sprno\source\repos\Grafos\obj\Release\ArbolGenerador.g.cs
+C:\Users\sprno\source\repos\Grafos\obj\Release\MatrizArbol.g.cs
+C:\Users\sprno\source\repos\Grafos\obj\Release\ArbolGenerador.baml
+C:\Users\sprno\source\repos\Grafos\obj\Release\MatrizArbol.baml
+C:\Users\sprno\source\repos\Grafos\obj\Release\Grafos.csproj.AssemblyReference.cache
+C:\Users\sprno\source\repos\Grafos\obj\Release\App.baml

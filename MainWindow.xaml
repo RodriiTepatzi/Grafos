@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Grafos"
         mc:Ignorable="d"
-        Title="Grafos" WindowStartupLocation="CenterScreen" Width="1096" Height="696.5" MouseMove="Window_MouseMove" ResizeMode="NoResize">
+        Title="Grafos" WindowStartupLocation="CenterScreen" Width="1096" Height="696.5" MouseMove="Window_MouseMove" ResizeMode="NoResize" Background="White" KeyUp="Window_KeyUp">
 
     <Grid x:Name="grid" Margin="0,84,6,-2">
         <Grid.ColumnDefinitions>
@@ -13,33 +13,35 @@
             <ColumnDefinition Width="329*"/>
         </Grid.ColumnDefinitions>
         <Grid x:Name="header" HorizontalAlignment="Left" Height="80" VerticalAlignment="Top" Width="1094" Margin="-6,-90,-4,0" Grid.ColumnSpan="2">
-            <Image Margin="10,0,969,31" Source="TecNM_logo.png" Stretch="Fill"/>
-            <Image Margin="130,9,852,31" Source="logo_ITA2015.png" Stretch="Fill"/>
             <Rectangle Fill="#FF1E1E5D" HorizontalAlignment="Left" Height="4" Margin="10,54,0,0" Stroke="Black" VerticalAlignment="Top" Width="1084"/>
+            <Label Content="Integrantes: Marco Rodrigo Flores Tepatzi - Jorge Jasiel Salmeron Vega" HorizontalAlignment="Left" Margin="9,18,0,0" VerticalAlignment="Top" Width="858" Background="{x:Null}" Foreground="Black"/>
         </Grid>
         <Grid x:Name="controles" HorizontalAlignment="Left" Height="583" Margin="384,-35,0,0" VerticalAlignment="Top" Width="272" Grid.Column="1">
-            <GroupBox Header="Controles" HorizontalAlignment="Left" Height="346" Margin="0,10,0,0" VerticalAlignment="Top" Width="252">
-                <Grid HorizontalAlignment="Left" Height="307" Margin="10,10,-2,0" VerticalAlignment="Top" Width="232">
-                    <ListView x:Name="lv_matriz" HorizontalAlignment="Left" Height="122" Margin="10,170,0,0" VerticalAlignment="Top" Width="212" IsSynchronizedWithCurrentItem="True" ItemsSource="{Binding _item}" FontSize="10">
+            <GroupBox Header="Controles" HorizontalAlignment="Left" Height="346" Margin="0,10,0,0" VerticalAlignment="Top" Width="252" Foreground="Black" BorderBrush="#FF009FFF">
+                <Grid HorizontalAlignment="Left" Height="313" Margin="10,10,-2,0" VerticalAlignment="Top" Width="232">
+                    <ListView x:Name="lv_matriz" HorizontalAlignment="Left" Height="122" Margin="10,167,0,0" VerticalAlignment="Top" Width="212" IsSynchronizedWithCurrentItem="True" ItemsSource="{Binding _item}" FontSize="10" Background="{x:Null}" BorderBrush="#FF009FFF" Foreground="Black">
                         <ListView.View>
                             <GridView/>
                         </ListView.View>
                     </ListView>
-                    <Button x:Name="nodo_partida_btn" Content="Punto partida" HorizontalAlignment="Left" Margin="90,5,0,0" VerticalAlignment="Top" Width="86" Click="nodo_partida_btn_Click" Height="25"/>
-                    <Button x:Name="nuevo_nodo_btn" Content="Añadir nodo" HorizontalAlignment="Left" Margin="10,5,0,0" VerticalAlignment="Top" TabIndex="1" Click="nuevo_nodo_btn_Click" Height="25" Width="75"/>
-                    <Button x:Name="ant_peso" Content="&lt;" HorizontalAlignment="Left" Margin="55,72,0,0" VerticalAlignment="Top" Width="24" Click="ant_peso_Click" IsEnabled="False" Height="22"/>
-                    <Button x:Name="set_inicio" Content="Inicio" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Click="set_inicio_Click" Margin="10,35,0,0" Height="25"/>
-                    <Button x:Name="sig_peso" Content="&gt;" HorizontalAlignment="Left" Margin="189,72,0,0" VerticalAlignment="Top" Width="24" Click="sig_peso_Click" IsEnabled="False" Height="22" Loaded="sig_peso_Loaded"/>
-                    <Label x:Name="ar_label" Content="0-0" HorizontalAlignment="Left" Margin="84,68,0,0" VerticalAlignment="Top"/>
+                    <Button x:Name="btnPuntoPartida" Style="{StaticResource RoundButtonTemplate}" Content="Punto partida" HorizontalAlignment="Left" Margin="90,5,0,0" VerticalAlignment="Top" Width="86" Click="btnPuntoPartida_Click" Height="25" Padding="3"/>
+                    <Button x:Name="btnNuevoNodo" Style="{StaticResource RoundButtonTemplate}" Content="Añadir nodo" HorizontalAlignment="Left" Margin="10,5,0,0" VerticalAlignment="Top" TabIndex="1" Click="btnNuevoNodo_Click" Height="25" Width="75" Padding="3"/>
+                    <Button x:Name="btnAnteriorPeso" Style="{StaticResource RoundButtonTemplate}" Content="&lt;" HorizontalAlignment="Left" Margin="42,76,0,0" VerticalAlignment="Top" Width="24" Click="btnAnteriorPeso_Click" IsEnabled="False" Height="22"/>
+                    <Button x:Name="btnInicio" Style="{StaticResource RoundButtonTemplate}" Content="Inicio" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Click="btnInicio_Click" Margin="10,35,0,0" Height="25" Padding="3"/>
+                    <Button x:Name="btnSiguientePeso" Style="{StaticResource RoundButtonTemplate}" Content="&gt;" HorizontalAlignment="Left" Margin="176,78,0,0" VerticalAlignment="Top" Width="24" Click="btnSiguientePeso_Click" IsEnabled="False" Height="22" Loaded="btnSiguientePeso_Loaded"/>
+                    <Button x:Name="btnGuardarPeso" Content="Guardar peso" Style="{StaticResource RoundButtonTemplate}" HorizontalAlignment="Left" Margin="10,114,0,0" VerticalAlignment="Top" Width="75" Click="btnGuardarPeso_Click" Height="25" Padding="3"/>
+                    <Button x:Name="btnArbol" Style="{StaticResource RoundButtonTemplate}" Content="Ver arbol" HorizontalAlignment="Left" Margin="90,35,0,0" VerticalAlignment="Top" Width="86" Height="25" IsEnabled="False" Click="btnArbol_Click" Padding="3"/>
+                    <Button x:Name="btnCrearArista" Style="{StaticResource RoundButtonTemplate}" Content="Crear arista" HorizontalAlignment="Left" Margin="96,114,0,0" VerticalAlignment="Top" Width="86" Click="btnCrearArista_Click" Height="25" Padding="3"/>
+                    <Label x:Name="ar_label" Content="0-0" HorizontalAlignment="Left" Margin="71,74,0,0" VerticalAlignment="Top" Foreground="Black"/>
                     <Label x:Name="nombre_nodo" Content="" HorizontalAlignment="Left" Margin="10,139,0,0" VerticalAlignment="Top" Height="26" Width="10"/>
-                    <Label x:Name="nodo_inicial_lb" Content="Nodo inicial: 0" HorizontalAlignment="Left" Margin="5,139,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.116,0.577" Height="26" Width="86"/>
-                    <Label x:Name="label_1" HorizontalAlignment="Left" Margin="111,139,0,0" VerticalAlignment="Top" Height="26" Width="102"/>
-                    <Label Content="Peso:" HorizontalAlignment="Left" Margin="5,72,0,0" VerticalAlignment="Top"/>
-                    <TextBox x:Name="peso_box" HorizontalAlignment="Left" Height="22" Margin="117,72,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="67" PreviewTextInput="peso_box_PreviewTextInput" TextChanged="peso_box_TextChanged" KeyDown="peso_box_KeyDown"/>
-                    <Button Content="Guardar peso" HorizontalAlignment="Left" Margin="10,114,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_1"/>
+                    <Label x:Name="nodo_inicial_lb" Content="Nodo inicial: 0" HorizontalAlignment="Left" Margin="5,139,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.116,0.577" Height="26" Width="86" Foreground="Black"/>
+                    <Label x:Name="label_1" HorizontalAlignment="Left" Margin="111,139,0,0" VerticalAlignment="Top" Height="26" Width="102" Foreground="#FF000104"/>
+                    <Label Content="Peso:" HorizontalAlignment="Left" Margin="5,72,0,0" VerticalAlignment="Top" Foreground="Black"/>
+                    <TextBox x:Name="tbPeso" HorizontalAlignment="Left" Height="22" Margin="104,78,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="67" PreviewTextInput="tbPeso_PreviewTextInput" Background="White" Foreground="Black"/>
+                    <Button x:Name="btnExpandir" Style="{StaticResource RoundButtonTemplate}" Content="Expandir" HorizontalAlignment="Left" Margin="10,294,0,-6" VerticalAlignment="Top" Width="86" Click="btnExpandir_Click" Height="25" Padding="3"/>
                 </Grid>
             </GroupBox>
-            <GroupBox x:Name="salida_gb" Header="Salida" HorizontalAlignment="Left" Height="212" Margin="0,361,0,0" VerticalAlignment="Top" Width="252">
+            <GroupBox x:Name="salida_gb" Header="Salida" HorizontalAlignment="Left" Height="212" Margin="0,361,0,0" VerticalAlignment="Top" Width="252" Foreground="Black" BorderBrush="#FF009FFF">
                 <TextBlock x:Name="salida_text" HorizontalAlignment="Left" Margin="31,10,-2,-4" TextWrapping="Wrap" VerticalAlignment="Top" Height="183" Width="211"/>
             </GroupBox>
         </Grid>
@@ -47,7 +49,7 @@
         <Canvas x:Name="canvas" HorizontalAlignment="Left" Height="567" Margin="10,-24,0,0" VerticalAlignment="Top" Width="792" Grid.ColumnSpan="2"/>
         <Label x:Name="nombre_arista" Content="" HorizontalAlignment="Left" Margin="0,38,0,0" VerticalAlignment="Top" Height="26" Width="10"/>
         <Label x:Name="coordenadas" Content="" HorizontalAlignment="Left" Margin="292,545,0,0" VerticalAlignment="Top" Height="26" Width="84" Grid.Column="1"/>
-        <Label x:Name="msg" Content="" HorizontalAlignment="Left" Margin="10,549,0,0" VerticalAlignment="Top" Height="23" Width="703" Grid.ColumnSpan="2"/>
+        <Label x:Name="msg" Content="" HorizontalAlignment="Left" Margin="10,549,0,0" VerticalAlignment="Top" Height="23" Width="703" Grid.ColumnSpan="2" Foreground="Black"/>
         <Label x:Name="label_2" Content="" HorizontalAlignment="Left" Margin="336,87,0,0" VerticalAlignment="Top" Height="26" Width="10"/>
 
     </Grid>

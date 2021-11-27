@@ -58,13 +58,30 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Resources\Aristas.cs" />
+    <Compile Include="ArbolGenerador.xaml.cs">
+      <DependentUpon>ArbolGenerador.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ExpandirMatrizWindow.xaml.cs">
+      <DependentUpon>ExpandirMatrizWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Arista.cs" />
+    <Compile Include="Models\Nodo.cs" />
+    <Compile Include="Controllers\AristaController.cs" />
     <Compile Include="Resources\Calcular.cs" />
-    <Compile Include="Resources\Dijkstra.cs" />
     <Compile Include="Resources\EncontrarElemento.cs" />
-    <Compile Include="Resources\Nodo.cs" />
-    <Compile Include="Resources\Warshall.cs" />
-    <Compile Include="Resources\_Dijkstra.cs" />
+    <Compile Include="MatrizArbol.xaml.cs">
+      <DependentUpon>MatrizArbol.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controllers\NodoController.cs" />
+    <Compile Include="Resources\Prim.cs" />
+    <Page Include="ArbolGenerador.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ExpandirMatrizWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -77,6 +94,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="MatrizArbol.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -104,11 +125,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Resource Include="TecNM_logo.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="logo_ITA2015.png" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
