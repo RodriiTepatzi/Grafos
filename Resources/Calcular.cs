@@ -176,8 +176,7 @@ namespace Grafos.Resources
             return matriz;
         }
 
-        private int minDistance(int[] dist,
-                        bool[] sptSet)
+        private int minDistance(int[] dist, bool[] sptSet)
         {
             int min = int.MaxValue, min_index = -1;
 
@@ -226,24 +225,16 @@ namespace Grafos.Resources
             
             for (int count = 0; count < V - 1; count++)
             {
-                // Pick the minimum distance vertex
-                // from the set of vertices not yet
-                // processed. u is always equal to
-                // src in first iteration.
+                // Obtenemos la minima distancia de los vertices aun no procesados. U siempre es igual a src en la primer iteracion.
                 int u = minDistance(dist, sptSet);
 
-                // Mark the picked vertex as processed
+                // Marcamos el nodo cómo procesado.
                 sptSet[u] = true;
 
-                // Update dist value of the adjacent
-                // vertices of the picked vertex.
+                // Actualizamos el valor de los vertices adyacentes de acuerdo al vertice obtenido.
                 for (int v = 0; v < V; v++)
+                    // Actualizamos dist[] solo si no esta en sptSet, hay una arista de u a v.
 
-                    // Update dist[v] only if is not in
-                    // sptSet, there is an edge from u
-                    // to v, and total weight of path
-                    // from src to v through u is smaller
-                    // than current value of dist[v]
                     if (!sptSet[v] && grafo[u, v] != 0 &&
                          dist[u] != int.MaxValue && dist[u] + grafo[u, v] < dist[v])
                         dist[v] = dist[u] + grafo[u, v];
