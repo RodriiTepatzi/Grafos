@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-C:\Users\sprno\source\repos\Grafos\obj\Release\
+C:\Users\sprno\Documents\GitHub\Grafos\obj\Release\
 Grafos
 none
 false
 TRACE
-C:\Users\sprno\source\repos\Grafos\App.xaml
-31559851530
+C:\Users\sprno\Documents\GitHub\Grafos\App.xaml
+4-1206173241
 
-141063891625
+15-1427430124
 13-1505183044
-ArbolGenerador.xaml;MainWindow.xaml;MatrizArbol.xaml;
+ArbolGenerador.xaml;ExpandirMatrizWindow.xaml;MainWindow.xaml;MatrizArbol.xaml;
 
 False
 

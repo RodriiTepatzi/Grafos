@@ -57,7 +57,6 @@ namespace Grafos
         // Variables para saber si se esta seleccionando el nodo Inicio y Final.
         private Boolean selectInicio = false, selectFinal = false;
 
-
         // Matriz para guardar la matriz de adyacencia.
         private int[,] matriz;
 
@@ -67,16 +66,18 @@ namespace Grafos
         // Variables para guardar los id del visor de pesos.
         private int pNodoId1 = 0, pNodoId2 = 0;
 
-        
-
         private int nodo_inicio = 1, nodo_final = 0;
         private int[,] arbol;
 
+        // Este es el contador del peso
         private int peso_counter = 0;
+
+        // Este asigna un maximo al previsualizador de pesos de aristas.
         private int max = 0;
 
+        // Clases a utilizar.
         Calcular CalculoHelper = new Calcular();
-        EncontrarElemento IHelper = new EncontrarElemento();
+        EncontrarElemento IHelper = new EncontrarElemento(); // IHelper nos ayuda a encontrar elementos en la ventana usando solo su nombre.
         APrim Prim = new APrim();
 
         // Constructor
@@ -95,7 +96,7 @@ namespace Grafos
 
         private void btnNuevoNodo_Click(object sender, RoutedEventArgs e)
         {
-            // Obtenemos un nuevo Id para el nuevo nodo.
+            // Obtenemos un nuev|o Id para el nuevo nodo.
             var id = _nodoController.GenerarId(nodos);
 
             // Mostrar el total de los nodos.
@@ -111,6 +112,8 @@ namespace Grafos
             nodo.CanvasObjeto.MouseRightButtonUp += Nodo_Eliminar;
             nodo.CanvasObjeto.MouseEnter += Nodo_MouseEnter;
             nodo.CanvasObjeto.MouseLeave += Nodo_MouseLeave;
+
+            // Asignamos la variable visible.
             nodo.CanvasObjeto.Visibility = Visibility.Visible;
 
             // Asignamos un textbox que indicará el id del nodo.
@@ -152,13 +155,16 @@ namespace Grafos
         // Metodo para capturar el focus en el nodo.
         private void Nodo_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            // Ásignamos el tipo de objeto sender, en este caso un ellipse (el nodo).
             Ellipse ellipse = sender as Ellipse;
-
-
+            
+            // Chequeamos que el boton seleccionar nodo inicio, no haya sido presionado y este sin finalizar.
             if (!selectInicio)
             {
+                // Si no es verdadero, entonces chequeamos si el ellipse existe o no.
                 if (ellipse != null)
                 {
+                    // Si existe le asignamos la propiedad CapturaMouse() para el evento MouseMove y así poder arrastrarlo.
                     ellipse.CaptureMouse();
                 }
             }
@@ -167,43 +173,57 @@ namespace Grafos
         // Metodo para cuando se suelte el boton izq. del mouse sobre el nodo.
         private void Nodo_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
+            // Asignamos el tipo ellipse al objeto activador de este metodo (sender).
             Ellipse ellipse = sender as Ellipse;
 
+            // Chequeamos saber si el servicio actual esta conectado una arista.
             if (conectandoArista)
             {
+                // Obtenemos el ID del nodo.
                 var id = int.Parse(_nodoController.ObtenerId(ellipse));
 
+                // Si el nodoId1 == 0, significa que el primer nodo no ha sido elegido.
                 if (nodoId1 == 0)
                 {
-                    if (nodoId1 == id) MessageBox.Show("No puede asignar una arista al mismo nodo. \n Por favor seleccione otro.");
-                    else nodoId1 = id;
+                    nodoId1 = id;
                 }
-                else if (nodoId2 == 0) nodoId2 = id;
+                else if (nodoId2 == 0)
 
+                    // Si el nodoId1 == id, significa que estamos asignando una arista al mismo nodo, lo cual no es posible. Mostramos una advertencia.
+                    if (nodoId1 == id) MessageBox.Show("No puede asignar una arista al mismo nodo. \n Por favor seleccione otro.");
+
+                    // Si no se cumple lo anterior, entonces significa que ningun nodo ha sido elegido, entonces podemos asignar el id a la variable nodoId2.
+                    else nodoId2 = id;
+
+                // Checamos si los dos id han sido asignados, y procedemos a llamar al metodo que crea la arista.
                 if (nodoId1 != 0 && nodoId2 != 0)
                 {
+                    // Llamada al metodo
                     CrearArista(nodoId1, nodoId2);
+                    // Restablecemos el cursor. Cursor es una variable del entorno Window.
                     Cursor = Cursors.Arrow;
                 }
             }
 
+            // Chequeamos saber si el servicio actual esta seleccionando el nodo de inicio.
             if (selectInicio)
             {
+                // Si se esta seleccionando. Entonces obtenemos el id y lo guardamos en la variable nodo_inicio.
                 nodo_inicio = int.Parse(_nodoController.ObtenerId(IHelper.FindChild<Ellipse>(Application.Current.MainWindow, ellipse.Name)));
 
+                // Si el nodo final == nodo inicio entonces mostramos una advertencia.
                 if (nodo_final == nodo_inicio)
                 {
                     MessageBox.Show("No es posible asignar el nodo inicio al mismo nodo final");
                     nodo_inicio = 0;
                 }
+                // Si no, guardamos el valor, reseteamos el cursor y paramos el servicio con selectInicio = false;
                 else
                 {
                     nodo_inicial_lb.Content = "Nodo inicial: " + nodo_inicio;
                     selectInicio = false;
                     Cursor = Cursors.Arrow;
                 }
-
-
             }
             else
             {
@@ -217,13 +237,23 @@ namespace Grafos
         // Metodo para arrastrar el nodo.
         private void Nodo_MouseMove(object sender, MouseEventArgs e)
         {
+            // Guardamos el nodo a mover como ellipse.
             Ellipse ellipse = sender as Ellipse;
+
+            // Obtenemos el id.
             string txt_id = _nodoController.ObtenerId(ellipse);
+
+            // Parseamos el id.
             var id = int.Parse(_nodoController.ObtenerId(ellipse));
+
+            // Buscamos el nodo en la lista.
             var nodo = nodos.Find(n => n.Id == id);
 
+            // Si el eclipse esta vacio, y el ellipse tiene capturado nuestro cursor, y el servicio conectandoArista esta desactivado, entonces
+            // podemos mover el nodo.
             if (ellipse != null && ellipse.IsMouseCaptured && !conectandoArista)
             {
+                // Condicion para evitar mover el nodo fuera del canvas.
                 if (e.GetPosition(MovementCanvas).X < max_x && e.GetPosition(MovementCanvas).Y < max_y &&
                     e.GetPosition(MovementCanvas).X > min_x && e.GetPosition(MovementCanvas).Y > min_y)
                 {
@@ -240,20 +270,28 @@ namespace Grafos
         // Metodo para eliminar el nodo.
         private void Nodo_Eliminar(object sender, MouseButtonEventArgs e)
         {
+            // Convertimos el nodo a ellipse.
             Ellipse ellipse = sender as Ellipse;
+
+            // Obtenemos su id.
             int id = int.Parse(_nodoController.ObtenerId(ellipse));
+            
+            // Lo buscamos en la lista.
             var nodo = nodos.Find(n => n.Id == id);
 
+            //Quitamos el objeto y label del canvas. Y luego lo borramos de la lista
             canvas.Children.Remove(nodo.CanvasObjeto);
             canvas.Children.Remove(nodo.CanvasLabel);
             nodos.RemoveAll(n => n.Id == id);
 
+            // Seteamos el nodo inicial a 0.
             if (id == nodo_inicio)
             {
                 nodo_inicio = 0;
                 nodo_inicial_lb.Content = "Nodo inicial: 0";
             }
 
+            // Contamos sus aristas, si no existen desactivamos botones.
             if (aristas.Count == 0)
             {
                 btnSiguientePeso.IsEnabled = false;
@@ -262,6 +300,7 @@ namespace Grafos
 
             int counter = 1;
 
+            // Renombramos nodos.
             foreach (var nodoTemp in nodos)
             {
                 if (nodoTemp.Id > id)
@@ -314,6 +353,8 @@ namespace Grafos
                 btnNuevoNodo.IsEnabled = true;
                 btnPuntoPartida.IsEnabled = true;
                 btnCrearArista.IsEnabled = true;
+                btnInicio.IsEnabled = true;
+                btnExpandir.IsEnabled = true;
 
                 matriz = CalculoHelper.CalcularMatriz(nodos, aristas);
 
@@ -325,8 +366,8 @@ namespace Grafos
                     pNodoId1 = id1;
                     pNodoId2 = id2;
 
-                    var arista1 = aristas.Find(n => n.IdNodo1 == pNodoId1 && n.IdNodo2 == pNodoId2);
-                    arista.CanvasObjeto.Stroke = Brushes.Green;
+                    /*var arista1 = aristas.Find(n => n.IdNodo1 == pNodoId1 && n.IdNodo2 == pNodoId2);
+                    arista.CanvasObjeto.Stroke = Brushes.Green;*/
 
                     tbPeso.Text = arista.Peso.ToString();
                     ar_label.Content = id1 + "-" + id2;
@@ -582,6 +623,7 @@ namespace Grafos
 
         private void Window_KeyUp(object sender, KeyEventArgs e)
         {
+            // La tecla escape cancela todos los servicios.
             if (e.Key == Key.Escape)
             {
                 nodoId1 = 0;
@@ -593,6 +635,8 @@ namespace Grafos
                 btnNuevoNodo.IsEnabled = true;
                 btnPuntoPartida.IsEnabled = true;
                 btnCrearArista.IsEnabled = true;
+                btnInicio.IsEnabled = true;
+                btnExpandir.IsEnabled = true;
             }
         }
 
@@ -637,6 +681,8 @@ namespace Grafos
             btnNuevoNodo.IsEnabled = false;
             btnPuntoPartida.IsEnabled = false;
             btnCrearArista.IsEnabled = false;
+            btnInicio.IsEnabled = false;
+            btnExpandir.IsEnabled = false;
         }
 
         #endregion
@@ -657,7 +703,7 @@ namespace Grafos
 
         #endregion
 
-
+        // Metodo para arrastrar el texto con el nodo.
         private void MoverTexto(double x, double y, string id)
         {
             TextBox tb = IHelper.FindChild<TextBox>(Application.Current.MainWindow, "txt_" + id);
@@ -666,6 +712,7 @@ namespace Grafos
             Canvas.SetTop(tb, y + 17);
         }
 
+        // Metodo para traer al frente. Esto en nodos para que las aristas no se superpongan.
         static public void TraerEnfrente(Canvas pParent, object pToMove, int max)
         {
             try
